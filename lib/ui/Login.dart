@@ -1,100 +1,81 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
-class Login extends StatefulWidget {
-  const Login({super.key});
+class CalculadoraScreen extends StatefulWidget {
+  const CalculadoraScreen({super.key});
 
   @override
-  State<Login> createState() => _LoginScreenState();
+  State<CalculadoraScreen> createState() => _CalculadoraScreenState();
 }
 
-class _LoginScreenState extends State<Login> {
-  String peso = '';
-  String altura = '';
-  String resultadoIMC = '';
+class _CalculadoraScreenState extends State<CalculadoraScreen> {
+  final TextEditingController _valorMensalController = TextEditingController();
+  final TextEditingController _mesesController = TextEditingController();
+  final TextEditingController _taxaJurosController = TextEditingController();
 
-  void calcularIMC() {
-    double? pesoDouble = double.tryParse(peso);
-    double? alturaDouble = double.tryParse(altura);
+  double montanteSemJuros = 0.0;
+  double montanteComJuros = 0.0;
 
-    if (pesoDouble != null && alturaDouble != null && alturaDouble > 0) {
-      double imc = pesoDouble / (alturaDouble * alturaDouble);
-      String classificacao;
+  void calcularMontantes() {
+    double valorMensal = double.tryParse(_valorMensalController.text) ?? 0.0;
+    int meses = int.tryParse(_mesesController.text) ?? 0;
+    double taxaJuros = (double.tryParse(_taxaJurosController.text) ?? 0.0) / 100;
 
-      if (imc < 18.5) {
-        classificacao = 'Abaixo do peso';
-      } else if (imc >= 18.5 && imc < 24.9) {
-        classificacao = 'Peso normal';
-      } else if (imc >= 25 && imc < 29.9) {
-        classificacao = 'Sobrepeso';
-      } else {
-        classificacao = 'Obesidade';
-      }
+    // Cálculo do montante sem juros
+    montanteSemJuros = valorMensal * meses;
 
-      setState(() {
-        resultadoIMC = 'Seu IMC é ${imc.toStringAsFixed(2)}: $classificacao';
-      });
-    } else {
-      setState(() {
-        resultadoIMC = 'Peso ou altura inválidos!';
-      });
+    // Cálculo do montante com juros compostos
+    montanteComJuros = valorMensal * ((pow(1 + taxaJuros, meses) - 1) / taxaJuros);
+
+    // Handle the case where taxaJuros is 0 to avoid division by zero
+    if (taxaJuros == 0) {
+      montanteComJuros = montanteSemJuros;
     }
+      setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('IMC'),
+        title: Text('Calculadora'),
         backgroundColor: Colors.blueGrey,
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Text(
-              'Peso',
-              style: TextStyle(fontSize: 18, color: Colors.blueGrey),
-            ),
             TextField(
+              controller: _valorMensalController,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
-                labelText: 'Digite seu peso',
+                labelText: 'Valor Mensal',
               ),
-              onChanged: (value) {
-                setState(() {
-                  peso = value;
-                });
-              },
               keyboardType: TextInputType.number,
             ),
-            Text(
-              'Altura',
-              style: TextStyle(fontSize: 18, color: Colors.blueGrey),
-            ),
             TextField(
+              controller: _mesesController,
               decoration: InputDecoration(
                 border: OutlineInputBorder(),
-                labelText: 'Digite sua altura',
+                labelText: 'Número de Meses',
               ),
-              onChanged: (value) {
-                setState(() {
-                  altura = value;
-                });
-              },
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: _taxaJurosController,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Taxa de Juros Mensal (%)',
+              ),
               keyboardType: TextInputType.number,
             ),
             ElevatedButton(
-              onPressed: () {
-                calcularIMC();
-              },
-              child: Text('Avaliar'),
+              onPressed: calcularMontantes,
+              child: Text('Calcular'),
             ),
-            SizedBox(height: 20),
-            Text(
-              resultadoIMC,
-              style: TextStyle(fontSize: 18, color: Colors.blueGrey),
-              textAlign: TextAlign.center,
-            ),
+            Text('Montante Sem Juros: R\$ ${montanteSemJuros.toStringAsFixed(2)}'),
+            Text('Montante Com Juros Compostos: R\$ ${montanteComJuros.toStringAsFixed(2)}'),
           ],
         ),
       ),
